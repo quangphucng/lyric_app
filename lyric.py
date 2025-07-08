@@ -1,3 +1,5 @@
+# author: quangphucng
+# 07.08.25 16h40
 import time
 import os
 
