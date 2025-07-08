@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 Ultra WOW Lyrics Player</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #ff006e;
+            --secondary-color: #3a86ff;
+            --accent-color: #06ffa5;
+            --text-color: #ffffff;
+            --bg-dark: #0a0a0a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-color);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 3D Background Canvas */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+        }
+
+        /* Particles Background */
+        #particles-js {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.6;
+        }
+
+        /* Glass morphism container */
+        .glass-container {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Neon glow effects */
+        .neon-text {
+            font-family: 'Orbitron', monospace;
+            text-shadow: 
+                0 0 5px currentColor,
+                0 0 10px currentColor,
+                0 0 20px currentColor,
+                0 0 40px currentColor;
+            animation: neonFlicker 2s infinite alternate;
+        }
+
+        @keyframes neonFlicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* 3D Buttons */
+        .btn-3d {
+            position: relative;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 15px;
+            padding: 15px 30px;
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transform: perspective(200px) rotateX(15deg);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 
+                0 10px 20px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-3d:hover {
+            transform: perspective(200px) rotateX(0deg) translateY(-5px);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+        }
+
+        .btn-3d:active {
+            transform: perspective(200px) rotateX(5deg) translateY(-2px);
+        }
+
+        /* Lyrics Display with 3D effect */
+        .lyrics-stage {
+            min-height: 400px;
+            position: relative;
+            perspective: 1000px;
+            overflow: hidden;
+        }
+
+        .lyric-line {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 30px 0;
+            opacity: 0;
+            transform: translateZ(-100px) rotateX(90deg);
+            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            text-align: center;
+            background: linear-gradient(45deg, #ff006e, #3a86ff, #06ffa5);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 3s ease infinite;
+            filter: drop-shadow(0 0 20px rgba(255, 0, 110, 0.5));
+        }
+
+        .lyric-line.active {
+            opacity: 1;
+            transform: translateZ(0) rotateX(0deg);
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Holographic progress bar */
+        .holo-progress {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .holo-progress::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shine 2s infinite;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 20px var(--primary-color);
+        }
+
+        @keyframes shine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        /* Floating controls */
+        .control-panel {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+
+        /* Music visualizer bars */
+        .visualizer {
+            display: flex;
+            justify-content: center;
+            align-items: end;
+            height: 60px;
+            gap: 3px;
+            margin: 20px 0;
+        }
+
+        .bar {
+            width: 4px;
+            background: linear-gradient(to top, var(--primary-color), var(--accent-color));
+            border-radius: 2px;
+            animation: musicBars 0.5s ease-in-out infinite alternate;
+        }
+
+        .bar:nth-child(odd) { animation-delay: 0.1s; }
+        .bar:nth-child(even) { animation-delay: 0.2s; }
+
+        @keyframes musicBars {
+            0% { height: 10px; }
+            100% { height: 40px; }
+        }
+
+        /* Hologram effect */
+        .hologram {
+            position: relative;
+        }
+
+        .hologram::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                transparent 40%, 
+                rgba(6, 255, 165, 0.03) 50%, 
+                transparent 60%
+            );
+            animation: hologramScan 3s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes hologramScan {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            border-radius: 10px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .lyric-line {
+                font-size: 1.8rem;
+            }
+            
+            .control-panel {
+                position: relative;
+                bottom: auto;
+                left: auto;
+                transform: none;
+                margin-top: 30px;
+            }
+        }
+
+        /* Loading animation */
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Pulse animation for active elements */
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 0, 110, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(255, 0, 110, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 0, 110, 0); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 3D Background Canvas -->
+    <canvas id="bg-canvas"></canvas>
+    
+    <!-- Particles Background -->
+    <div id="particles-js"></div>
+
+    <div class="container-fluid py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <!-- Header Section -->
+                <div class="text-center mb-5">
+                    <h1 class="display-1 neon-text fw-bold mb-3" style="color: var(--primary-color);">
+                        🎵 ULTRA LYRICS
+                    </h1>
+                    <p class="lead fs-3" style="color: var(--accent-color);">
+                        Experience music in a whole new dimension
+                    </p>
+                    
+                    <!-- Music Visualizer -->
+                    <div class="visualizer">
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                    </div>
+                </div>
+
+                <!-- Main Lyrics Stage -->
+                <div class="glass-container hologram lyrics-stage p-5 mb-4">
+                    <div id="lyricsDisplay" class="text-center">
+                        <div class="loading-spinner mb-3"></div>
+                        <h3 style="color: var(--accent-color);">Ready to blow your mind? 🚀</h3>
+                        <p class="text-muted">Press play to enter the music dimension</p>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="glass-container p-3 mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold">Progress</span>
+                        <span id="progressText">0%</span>
+                    </div>
+                    <div class="holo-progress">
+                        <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <!-- Speed Control -->
+                <div class="glass-container p-4 mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-tachometer-alt me-2"></i>Speed Control
+                            </label>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="range" class="form-range" id="speedSlider" 
+                                   min="20" max="200" value="80" 
+                                   oninput="updateSpeed(this.value)">
+                        </div>
+                        <div class="col-md-3">
+                            <span class="badge bg-primary fs-6" id="speedValue">80ms</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="text-center mb-4">
+                    <div class="row g-3 justify-content-center">
+                        <div class="col-auto">
+                            <button class="btn btn-3d pulse" onclick="playLyrics()" id="playBtn">
+                                <i class="fas fa-play me-2"></i>LAUNCH
+                            </button>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-3d" onclick="stopLyrics()" id="stopBtn">
+                                <i class="fas fa-stop me-2"></i>STOP
+                            </button>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-3d" onclick="toggleAddForm()">
+                                <i class="fas fa-plus me-2"></i>ADD LYRICS
+                            </button>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-3d" onclick="toggleLyricsList()">
+                                <i class="fas fa-list me-2"></i>VIEW ALL
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Lyrics Form -->
+                <div class="glass-container p-4 mb-4" id="inputSection" style="display: none;">
+                    <h4 class="text-center mb-4" style="color: var(--accent-color);">
+                        <i class="fas fa-music me-2"></i>Add New Lyrics
+                    </h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Lyrics Text</label>
+                                <textarea class="form-control" id="newLyric" rows="3" 
+                                         placeholder="Enter your lyrics here..."></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">Delay (seconds)</label>
+                                <input type="number" class="form-control" id="newDelay" 
+                                       value="2" step="0.1" min="0">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">Speed (ms)</label>
+                                <input type="number" class="form-control" id="newSpeed" 
+                                       value="80" step="10" min="20" max="200">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <button class="btn btn-3d" onclick="addNewLyric()">
+                            <i class="fas fa-rocket me-2"></i>Add to Collection
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lyrics List -->
+                <div class="glass-container p-4" id="lyricsList" style="display: none;">
+                    <h4 class="text-center mb-4" style="color: var(--accent-color);">
+                        <i class="fas fa-headphones me-2"></i>Lyrics Collection
+                    </h4>
+                    <div id="lyricsContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Control Panel -->
+    <div class="control-panel d-none d-lg-block">
+        <div class="glass-container p-3">
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-light btn-sm" onclick="playLyrics()">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button class="btn btn-outline-light btn-sm" onclick="stopLyrics()">
+                    <i class="fas fa-stop"></i>
+                </button>
+                <button class="btn btn-outline-light btn-sm" onclick="toggleFullscreen()">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <script>
+        // Lyrics data
+        let lyrics = [
+            { text: "Anh vui", delay: 1.2, speed: 80 },
+            { text: "Sao nước mắt cứ tuôn trào", delay: 2.5, speed: 80 },
+            { text: "Chẳng phải như thế quá tốt hay sao", delay: 3.0, speed: 80 },
+            { text: "Anh ta đáng giá những gì cho", delay: 2.5, speed: 80 },
+            { text: "Người lại nhìn anh trong chẳng ra sao", delay: 3.0, speed: 80 },
+            { text: "Cũng đừng thối", delay: 1.8, speed: 80 }
+        ];
+
+        let currentSpeed = 80;
+        let isPlaying = false;
+        let currentTimeout;
+        let scene, camera, renderer, particles;
+
+        // Initialize 3D Background
+        function init3DBackground() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            // Create particles
+            const geometry = new THREE.BufferGeometry();
+            const particleCount = 2000;
+            const positions = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount * 3; i++) {
+                positions[i] = (Math.random() - 0.5) * 2000;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const material = new THREE.PointsMaterial({
+                color: 0x06ffa5,
+                size: 2,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+
+            camera.position.z = 1000;
+
+            animate3D();
+        }
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            
+            particles.rotation.x += 0.001;
+            particles.rotation.y += 0.002;
+            
+            renderer.render(scene, camera);
+        }
+
+        // Initialize Particles.js
+        function initParticles() {
+            particlesJS('particles-js', {
+                particles: {
+                    number: { value: 100 },
+                    color: { value: ['#ff006e', '#3a86ff', '#06ffa5'] },
+                    shape: { type: 'circle' },
+                    opacity: { value: 0.6, random: true },
+                    size: { value: 3, random: true },
+                    line_linked: {
+                        enable: true,
+                        distance: 150,
+                        color: '#06ffa5',
+                        opacity: 0.4,
+                        width: 1
+                    },
+                    move: {
+                        enable: true,
+                        speed: 2,
+                        direction: 'none',
+                        random: false,
+                        straight: false,
+                        out_mode: 'out',
+                        bounce: false
+                    }
+                },
+                interactivity: {
+                    detect_on: 'canvas',
+                    events: {
+                        onhover: { enable: true, mode: 'repulse' },
+                        onclick: { enable: true, mode: 'push' },
+                        resize: true
+                    },
+                    modes: {
+                        grab: { distance: 400, line_linked: { opacity: 1 } },
+                        bubble: { distance: 400, size: 40, duration: 2, opacity: 8, speed: 3 },
+                        repulse: { distance: 200, duration: 0.4 },
+                        push: { particles_nb: 4 },
+                        remove: { particles_nb: 2 }
+                    }
+                },
+                retina_detect: true
+            });
+        }
+
+        // Update speed
+        function updateSpeed(value) {
+            currentSpeed = parseInt(value);
+            document.getElementById('speedValue').textContent = value + 'ms';
+        }
+
+        // Advanced typewriter effect with GSAP
+        function typewriterEffect(element, text, speed, callback) {
+            element.innerHTML = '';
+            element.classList.add('active');
+            
+            // GSAP animation for element appearance
+            gsap.fromTo(element, 
+                { opacity: 0, scale: 0.5, rotationX: 90 },
+                { opacity: 1, scale: 1, rotationX: 0, duration: 0.8, ease: "back.out(1.7)" }
+            );
+            
+            let i = 0;
+            function typeChar() {
+                if (i < text.length && isPlaying) {
+                    element.innerHTML += text.charAt(i);
+                    
+                    // Add sparkle effect on each character
+                    if (Math.random() > 0.7) {
+                        createSparkle(element);
+                    }
+                    
+                    i++;
+                    currentTimeout = setTimeout(typeChar, speed);
+                } else if (callback) {
+                    // Final animation for completed line
+                    gsap.to(element, {
+                        textShadow: "0 0 30px currentColor",
+                        duration: 0.5,
+                        yoyo: true,
+                        repeat: 1
+                    });
+                    callback();
+                }
+            }
+            typeChar();
+        }
+
+        // Create sparkle effect
+        function createSparkle(element) {
+            const sparkle = document.createElement('span');
+            sparkle.innerHTML = '✨';
+            sparkle.style.position = 'absolute';
+            sparkle.style.fontSize = '1rem';
+            sparkle.style.pointerEvents = 'none';
+            sparkle.style.left = Math.random() * element.offsetWidth + 'px';
+            sparkle.style.top = Math.random() * element.offsetHeight + 'px';
+            
+            element.style.position = 'relative';
+            element.appendChild(sparkle);
+            
+            gsap.to(sparkle, {
+                y: -50,
+                opacity: 0,
+                duration: 1,
+                ease: "power2.out",
+                onComplete: () => sparkle.remove()
+            });
+        }
+
+        // Play lyrics with enhanced effects
+        function playLyrics() {
+            if (isPlaying) return;
+            
+            isPlaying = true;
+            const display = document.getElementById('lyricsDisplay');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            // Clear display and add dramatic entrance
+            gsap.to(display, {
+                opacity: 0,
+                duration: 0.3,
+                onComplete: () => {
+                    display.innerHTML = '';
+                    gsap.to(display, { opacity: 1, duration: 0.3 });
+                }
+            });
+            
+            progressFill.style.width = '0%';
+            progressText.textContent = '0%';
+            
+            // Animate visualizer bars
+            const bars = document.querySelectorAll('.bar');
+            bars.forEach(bar => {
+                bar.style.animationPlayState = 'running';
+            });
+            
+            let currentIndex = 0;
+            
+            function playNextLyric() {
+                if (currentIndex >= lyrics.length || !isPlaying) {
+                    if (isPlaying) {
+                        // Final celebration animation
+                        progressFill.style.width = '100%';
+                        progressText.textContent = '100%';
+                        
+                        setTimeout(() => {
+                            display.innerHTML = `
+                                <div class="text-center">
+                                    <h2 style="color: var(--accent-color);">🎉 SPECTACULAR! 🎉</h2>
+                                    <p class="text-muted">Ready for another mind-blowing experience?</p>
+                                </div>
+                            `;
+                            
+                            // Fireworks effect
+                            for (let i = 0; i < 20; i++) {
+                                setTimeout(() => createFirework(), i * 100);
+                            }
+                            
+                            isPlaying = false;
+                            bars.forEach(bar => {
+                                bar.style.animationPlayState = 'paused';
+                            });
+                        }, 1000);
+                    }
+                    return;
+                }
+                
+                const lyric = lyrics[currentIndex];
+                const lyricElement = document.createElement('div');
+                lyricElement.className = 'lyric-line';
+                lyricElement.style.color = getRandomGlowColor();
+                display.appendChild(lyricElement);
+                
+                // Update progress with smooth animation
+                const progress = ((currentIndex + 1) / lyrics.length) * 100;
+                gsap.to(progressFill, {
+                    width: progress + '%',
+                    duration: 0.5,
+                    ease: "power2.out"
+                });
+                progressText.textContent = Math.round(progress) + '%';
+                
+                typewriterEffect(lyricElement, lyric.text, lyric.speed, () => {
+                    currentIndex++;
+                    if (isPlaying) {
+                        currentTimeout = setTimeout(playNextLyric, lyric.delay * 1000);
+                    }
+                });
+            }
+            
+            playNextLyric();
+        }
+
+        // Create firework effect
+        function createFirework() {
+            const container = document.getElementById('lyricsDisplay');
+            const firework = document.createElement('div');
+            firework.innerHTML = '🎆';
+            firework.style.position = 'absolute';
+            firework.style.fontSize = '2rem';
+            firework.style.left = Math.random() * container.offsetWidth + 'px';
+            firework.style.top = Math.random() * container.offsetHeight + 'px';
+            firework.style.pointerEvents = 'none';
+            
+            container.style.position = 'relative';
+            container.appendChild(firework);
+            
+            gsap.to(firework, {
+                scale: 3,
+                opacity: 0,
+                rotation: 360,
+                duration: 1,
+                ease: "power2.out",
+                onComplete: () => firework.remove()
+            });
+        }
+
+        // Stop lyrics
+        function stopLyrics() {
+            isPlaying = false;
+            clearTimeout(currentTimeout);
+            
+            const display = document.getElementById('lyricsDisplay');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const bars = document.querySelectorAll('.bar');
+            
+            // Stop animations
+            bars.forEach(bar => {
+                bar.style.animationPlayState = 'paused';
+            });
+            
+            // Dramatic stop effect
+            gsap.to(display, {
+                opacity: 0,
+                scale: 0.8,
+                duration: 0.5,
+                onComplete: () => {
+                    display.innerHTML = `
+                        <div class="text-center">
+                            <h3 style="color: #ff006e;">⏹️ STOPPED</h3>
+                            <p class="text-muted">Ready when you are, commander!</p>
+                        </div>
+                    `;
+                    gsap.to(display, { opacity: 1, scale: 1, duration: 0.5 });
+                }
+            });
+            
+            progressFill.style.width = '0%';
+            progressText.textContent = '0%';
+        }
+
+        // Get random glow color
+        function getRandomGlowColor() {
+            const colors = ['#ff006e', '#3a86ff', '#06ffa5', '#ff4081', '#00bcd4', '#ffeb3b'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // Toggle forms with animations
+        function toggleAddForm() {
+            const inputSection = document.getElementById('inputSection');
+            const lyricsList = document.getElementById('lyricsList');
+            
+            lyricsList.style.display = 'none';
+            
+            if (inputSection.style.display === 'none') {
+                inputSection.style.display = 'block';
+                gsap.fromTo(inputSection, 
+                    { opacity: 0, y: 50, scale: 0.9 },
+                    { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "back.out(1.7)" }
+                );
+            } else {
+                gsap.to(inputSection, {
+                    opacity: 0,
+                    y: -50,
+                    scale: 0.9,
+                    duration: 0.4,
+                    onComplete: () => inputSection.style.display = 'none'
+                });
+            }
+        }
+
+        function toggleLyricsList() {
+            const lyricsList = document.getElementById('lyricsList');
+            const inputSection = document.getElementById('inputSection');
+            
+            inputSection.style.display = 'none';
+            
+            if (lyricsList.style.display === 'none') {
+                updateLyricsList();
+                lyricsList.style.display = 'block';
+                gsap.fromTo(lyricsList,
+                    { opacity: 0, y: 50, scale: 0.9 },
+                    { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "back.out(1.7)" }
+                );
+            } else {
+                gsap.to(lyricsList, {
+                    opacity: 0,
+                    y: -50,
+                    scale: 0.9,
+                    duration: 0.4,
+                    onComplete: () => lyricsList.style.display = 'none'
+                });
+            }
+        }
+
+        // Add new lyric with celebration
+        function addNewLyric() {
+            const text = document.getElementById('newLyric').value.trim();
+            const delay = parseFloat(document.getElementById('newDelay').value) || 2;
+            const speed = parseInt(document.getElementById('newSpeed').value) || 80;
+            
+            if (!text) {
+                // Error shake animation
+                const form = document.getElementById('inputSection');
+                gsap.to(form, {
+                    x: -10,
+                    duration: 0.1,
+                    yoyo: true,
+                    repeat: 5,
+                    ease: "power2.inOut"
+                });
+                return;
+            }
+            
+            lyrics.push({ text, delay, speed });
+            
+            // Success celebration
+            const display = document.getElementById('lyricsDisplay');
+            const celebrationMessage = `
+                <div class="text-center">
+                    <h2 style="color: var(--accent-color);">🚀 LYRICS ADDED! 🚀</h2>
+                    <p class="text-muted">Your masterpiece has been added to the collection!</p>
+                </div>
+            `;
+            
+            gsap.to(display, {
+                opacity: 0,
+                duration: 0.3,
+                onComplete: () => {
+                    display.innerHTML = celebrationMessage;
+                    gsap.to(display, { opacity: 1, duration: 0.3 });
+                    
+                    // Confetti effect
+                    for (let i = 0; i < 15; i++) {
+                        setTimeout(() => createConfetti(), i * 50);
+                    }
+                }
+            });
+            
+            // Reset form with animation
+            gsap.to('#newLyric', { value: '', duration: 0.3 });
+            document.getElementById('newLyric').value = '';
+            document.getElementById('newDelay').value = '2';
+            document.getElementById('newSpeed').value = '80';
+            
+            // Hide form after success
+            setTimeout(() => {
+                toggleAddForm();
+                display.innerHTML = `
+                    <div class="loading-spinner mb-3"></div>
+                    <h3 style="color: var(--accent-color);">Ready to blow your mind? 🚀</h3>
+                    <p class="text-muted">Press play to enter the music dimension</p>
+                `;
+            }, 3000);
+        }
+
+        // Create confetti effect
+        function createConfetti() {
+            const container = document.getElementById('lyricsDisplay');
+            const confetti = document.createElement('div');
+            const symbols = ['🎉', '🎊', '✨', '🌟', '💫', '⭐'];
+            confetti.innerHTML = symbols[Math.floor(Math.random() * symbols.length)];
+            confetti.style.position = 'absolute';
+            confetti.style.fontSize = '1.5rem';
+            confetti.style.left = Math.random() * container.offsetWidth + 'px';
+            confetti.style.top = '-20px';
+            confetti.style.pointerEvents = 'none';
+            
+            container.style.position = 'relative';
+            container.appendChild(confetti);
+            
+            gsap.to(confetti, {
+                y: container.offsetHeight + 50,
+                x: (Math.random() - 0.5) * 200,
+                rotation: Math.random() * 720,
+                opacity: 0,
+                duration: 2 + Math.random(),
+                ease: "power2.out",
+                onComplete: () => confetti.remove()
+            });
+        }
+
+        // Update lyrics list with fancy animations
+        function updateLyricsList() {
+            const content = document.getElementById('lyricsContent');
+            content.innerHTML = '';
+            
+            lyrics.forEach((lyric, index) => {
+                const item = document.createElement('div');
+                item.className = 'glass-container p-3 mb-3';
+                item.style.opacity = '0';
+                item.style.transform = 'translateY(20px)';
+                item.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1" style="color: var(--accent-color);">
+                                <i class="fas fa-music me-2"></i>Line ${index + 1}
+                            </h6>
+                            <p class="mb-1 fs-5">${lyric.text}</p>
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>Delay: ${lyric.delay}s • 
+                                <i class="fas fa-tachometer-alt me-1"></i>Speed: ${lyric.speed}ms
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <button class="btn btn-outline-danger btn-sm" onclick="removeLyric(${index})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                content.appendChild(item);
+                
+                // Staggered animation
+                gsap.to(item, {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.5,
+                    delay: index * 0.1,
+                    ease: "back.out(1.7)"
+                });
+            });
+        }
+
+        // Remove lyric with animation
+        function removeLyric(index) {
+            const items = document.querySelectorAll('#lyricsContent .glass-container');
+            const item = items[index];
+            
+            gsap.to(item, {
+                opacity: 0,
+                x: -50,
+                scale: 0.8,
+                duration: 0.4,
+                ease: "power2.in",
+                onComplete: () => {
+                    lyrics.splice(index, 1);
+                    updateLyricsList();
+                }
+            });
+        }
+
+        // Toggle fullscreen
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().then(() => {
+                    // Fullscreen entered - enhance experience
+                    gsap.to('body', {
+                        backgroundColor: '#000000',
+                        duration: 1
+                    });
+                });
+            } else {
+                document.exitFullscreen().then(() => {
+                    // Fullscreen exited
+                    gsap.to('body', {
+                        backgroundColor: '#0a0a0a',
+                        duration: 1
+                    });
+                });
+            }
+        }
+
+        // Responsive canvas resize
+        function onWindowResize() {
+            if (camera && renderer) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (event) => {
+            switch(event.code) {
+                case 'Space':
+                    event.preventDefault();
+                    if (isPlaying) {
+                        stopLyrics();
+                    } else {
+                        playLyrics();
+                    }
+                    break;
+                case 'Escape':
+                    stopLyrics();
+                    break;
+                case 'KeyF':
+                    if (event.ctrlKey) {
+                        event.preventDefault();
+                        toggleFullscreen();
+                    }
+                    break;
+            }
+        });
+
+        // Enhanced loading screen
+        function showLoadingScreen() {
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.id = 'loadingOverlay';
+            loadingOverlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(135deg, #0a0a0a, #1a1a2e);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+                color: white;
+                font-family: 'Orbitron', monospace;
+            `;
+            
+            loadingOverlay.innerHTML = `
+                <div class="text-center">
+                    <div class="loading-spinner mb-4" style="width: 60px; height: 60px;"></div>
+                    <h2 class="neon-text">INITIALIZING ULTRA EXPERIENCE</h2>
+                    <p class="text-muted">Loading 3D graphics and particle systems...</p>
+                    <div class="progress" style="width: 300px; height: 4px; margin: 20px auto;">
+                        <div class="progress-bar bg-primary" id="loadingProgress" style="width: 0%;"></div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(loadingOverlay);
+            
+            // Simulate loading progress
+            let progress = 0;
+            const loadingInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(loadingInterval);
+                    
+                    setTimeout(() => {
+                        gsap.to(loadingOverlay, {
+                            opacity: 0,
+                            duration: 1,
+                            onComplete: () => loadingOverlay.remove()
+                        });
+                    }, 500);
+                }
+                document.getElementById('loadingProgress').style.width = progress + '%';
+            }, 200);
+        }
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            showLoadingScreen();
+            
+            // Initialize 3D background
+            setTimeout(() => {
+                init3DBackground();
+            }, 500);
+            
+            // Initialize particles
+            setTimeout(() => {
+                initParticles();
+            }, 1000);
+            
+            // Hide sections initially
+            document.getElementById('inputSection').style.display = 'none';
+            document.getElementById('lyricsList').style.display = 'none';
+            
+            // Add window resize listener
+            window.addEventListener('resize', onWindowResize);
+            
+            // Welcome animation
+            setTimeout(() => {
+                gsap.fromTo('.container-fluid', 
+                    { opacity: 0, y: 50 },
+                    { opacity: 1, y: 0, duration: 1, ease: "power2.out" }
+                );
+            }, 2000);
+        });
+
+        // Mouse trail effect
+        document.addEventListener('mousemove', (e) => {
+            const trail = document.createElement('div');
+            trail.style.cssText = `
+                position: fixed;
+                width: 10px;
+                height: 10px;
+                background: radial-gradient(circle, var(--accent-color), transparent);
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 1000;
+                left: ${e.clientX - 5}px;
+                top: ${e.clientY - 5}px;
+            `;
+            
+            document.body.appendChild(trail);
+            
+            gsap.to(trail, {
+                scale: 0,
+                opacity: 0,
+                duration: 0.8,
+                ease: "power2.out",
+                onComplete: () => trail.remove()
+            });
+        });
+
+        // Performance monitor (optional)
+        function monitorPerformance() {
+            const stats = {
+                fps: 0,
+                frameCount: 0,
+                lastTime: performance.now()
+            };
+            
+            function updateStats() {
+                stats.frameCount++;
+                const currentTime = performance.now();
+                
+                if (currentTime >= stats.lastTime + 1000) {
+                    stats.fps = Math.round((stats.frameCount * 1000) / (currentTime - stats.lastTime));
+                    stats.frameCount = 0;
+                    stats.lastTime = currentTime;
+                    
+                    // Adjust quality based on performance
+                    if (stats.fps < 30) {
+                        // Reduce particle count if performance is poor
+                        console.log('Performance optimization triggered');
+                    }
+                }
+                
+                requestAnimationFrame(updateStats);
+            }
+            
+            updateStats();
+        }
+
+        // Start performance monitoring
+        setTimeout(monitorPerformance, 3000);
+    </script>
+</body>
+</html>
